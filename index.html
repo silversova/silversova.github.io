@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Warming</title>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<script src="https://d3js.org/d3.v5.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+
+	<style>
+		body {
+			/* cursor: url(http://www.xxix.co/_assets/images/cursor/cursor-circle-lg-yellow-fill.png) 15 15, auto !important; */
+		}
+
+
+		.axis {
+			font: 10px sans-serif;
+		}
+
+		.container {
+			width: 400px;
+		}
+
+		/* svg   {display: -webkit-box;
+display: -webkit-flex;
+display: -ms-flexbox;
+display: flex;} */
+
+		.axis path,
+		.axis line {
+			fill: none;
+			stroke: #000;
+		}
+
+		.tick line {
+			stroke-width: 0.4px;
+		}
+
+		.dot {
+			stroke-dasharray: 1, 1;
+			stroke: grey;
+		}
+
+		.marker {
+			fill: grey;
+		}
+
+		svg {
+			shape-rendering: crispEdges;
+		}
+
+		svg,
+		canvas,
+		.test,
+		#png-container {
+			display: block;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="container"></div>
+
+	<!-- <canvas id="canvas" width="400" height="400"></canvas> -->
+	<div id="png-container"></div>
+  <div id="b64-container"></div>
+
+	<!-- load the d3.js library -->
+
+
+
+
+	<script>
+		// FOR BOTH VIZ(s)
+		/**
+		 * target single container
+		 * add a tooltip
+		 * define measures for the margin Means, width and height
+		 * describe the colors used throughout the project
+		 */
+
+
+
+
+
+		var margin = {
+				top: 60,
+				right: 30,
+				bottom: 60,
+				left: 30
+			},
+			width = 400,
+			height = 400;
+
+
+		// STRIPES CHART
+		/** logic
+		 * add data
+		 * include wrapping container
+		 * include introductory html elements
+		 * include svg
+		 * detail scales, axes (actually not necessary for the stripes)
+		 * ! remember the color scale from one color to another
+		 * detail a rectangle element for the legend (this requires a linear gradient, included in between defs tag)
+		 * detail rectangle elements
+		 */
+
+
+
+		// data for the warm stripes
+		/*
+		Year, deviation from the average temperature
+		data sorted in objects structured as follows:
+				{
+						Year: 1900,
+						Mean: -0.28
+				}
+		*/
+
+
+
+		// add a container for the visualization
+		var svg = d3.select(".container")
+
+
+
+			// svg g frame
+
+			.append("svg")
+			.attr("xmlns", 'http://www.w3.org/2000/svg')
+			.attr("version", '1.1')
+			.attr("xmlns:rdf", 'http://www.w3.org/1999/02/22-rdf-syntax-ns#')
+			.attr("xmlns:cc", 'http://creativecommons.org/ns#')
+			.attr("xmlns:dc", 'http://purl.org/dc/elements/1.1/')
+			.attr("viewBox", `0 0 ${width} ${height}`)
+			.attr("xml:space", 'preserve')
+			.attr('id', 'svg')
+			.style("background-color", 'black')
+			.append("g")
+			.attr("transform", `translate(0 0)`);
+
+
+
+		//width,0 = reverse; 0, width = normal
+		var x = d3.scaleBand()
+			.range([width, 0])
+			.rangeRound([width, 0])
+			.paddingInner(0);
+
+
+
+
+
+
+		d3.csv("https://pkgstore.datahub.io/core/global-temp/annual_csv/data/a26b154688b061cdd04f1df36e4408be/annual_csv.csv").then(function(data) {
+    // d3.csv("global.csv").then(function(data) {
+
+			//experiment get last value (0,0=reverse; -1,0=normal)
+			var last = data.slice(0)[0];
+
+			//
+			// var last2 = data.splice(-3);
+			// console.log (last2);
+			// document.getElementById('test').innerHTML += last2;
+
+			// var popped = data.pop();
+			// console.log(popped);
+			// document.getElementById("test").innerHTML = popped;
+
+
+
+
+
+
+
+			var min = d3.min(data, function(d) {
+				return d.Mean;
+			});
+			var max = d3.max(data, function(d) {
+				return d.Mean;
+			});
+
+			var minyear = d3.min(data, function(d) {
+				return d.Year;
+			});
+			var maxyear = d3.max(data, function(d) {
+				return d.Year;
+			});
+
+			var color_scale = ["#08306b", "#08519c", "#2171b5", "#4292c6", "#6baed6", "#9ecae1", "#c6dbef", "#deebf7", "#fee0d2", "#fcbba1", "#fc9272", "#fb6a4a", "#ef3b2c", "#cb181d", "#a50f15", "#67000d"]
+
+			// interpolateViridis+1+2=warming stripes; interpolateGreys+1=greys
+			const fill = d3.scaleSequential()
+				.interpolator(d3.interpolateViridis)
+				.domain([min, max]);
+
+			var color = d3.scaleQuantize()
+				.domain([min, max])
+				.range(color_scale);
+
+
+
+
+
+
+
+
+
+			//
+			//
+			// 	svg.append('g')
+			// 	.attr("class", "axis")
+			// 	        .attr('transform', `translate(0, ${height})`)
+			//
+			// 	     .call(xAxis);
+
+			// append two text elements describing the smallest and biggest Mean Means
+			// position them at either end of the rectangle
+
+			// include one rectangle for each data point, as wide as a portion of the total width and as tall as the total height
+			svg.selectAll("g")
+				.data(last.Year)
+				.enter()
+				.append("rect")
+				.attr("class", "stripe")
+				// on mouseover display the tooltip with paragraph elements describing the data point
+
+				// d.Year = full; last.Year = last
+
+				.attr("width", 200)
+				// spread each rectangle to cover the totality of the container's height
+
+				.attr("height", 400)
+
+
+
+
+				// 1=warming stripes; 2=greys or interpolateViridis
+
+				// d.Mean = full; last.Mean = last
+				.attr("fill", function(d) {
+					return color(last.Mean)
+				})
+
+
+			var svgString = new XMLSerializer().serializeToString(document.querySelector('svg'));
+
+      var c = document.createElement('canvas');
+      var ctx = c.getContext('2d');
+
+      var img = new Image;
+      var something = new Blob([svgString], {type: "image/svg+xml"});
+      img.src = URL.createObjectURL(something);
+      img.onload = function () {
+          c.width = img.width;
+          c.height = img.height;
+          ctx.drawImage(img, 0, 0);
+          var imageData = c.toDataURL('image/png');
+          document.querySelector('#png-container').innerHTML = '<img src="' + imageData + '"/>';
+
+					b64 = imageData.slice(imageData.indexOf(',') + 1);
+					document.querySelector('#b64-container').innerHTML = 'test';
+      };
+
+
+
+		});
+	</script>
+
+
+
+
+
+</body>
+
+</html>
